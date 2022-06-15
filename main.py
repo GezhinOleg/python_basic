@@ -1,5 +1,5 @@
 # ! coding: utf-8
-# pip install requirements.txt
+# pip install -r requirements.txt
 
 
 import json
@@ -10,7 +10,9 @@ from  progress.bar import IncrementalBar
 
 def main():
     vk_token = input('Enter VK-Token')
+    # vk_token = return_vk_token()
     yandex_disk_token = input('Enter Yandex Disk Token: ')
+    # yandex_disk_token = return_yandex_disk_token()
     vk_ipi_version = '5.131'
     vk_user = VkUser(vk_token, vk_ipi_version)
     yd_user = YandexDisk(yandex_disk_token)
@@ -18,11 +20,13 @@ def main():
     user_data = vk_user.get_user_data(vk_user_id)
     albums_data = vk_user.get_photo_albums(vk_user_id)
     albums_dict = get_folders_ids_dict(albums_data)
-    album = get_user_album_choice(albums_dict)
-    if album == 0:
+    album_id = get_user_album_choice(albums_dict)
+    if album_id == 0:
         number_of_photos = input('Enter number of photos: ')
         photo_db = photos_data_dict(user_data=user_data, photos_data=vk_user.get_all_photos_data(user_id=vk_user_id, count=number_of_photos))
         links = get_photo_urls(photo_db)
+        if len(links) < int(number_of_photos):
+            print('All photos in the album: ', len(links))
         yd_user.mkdir('vk_photo')
         yd_user.mkdir('vk_photo/{} {}'.format(user_data['last_name'], user_data['first_name']))
         folder_path = '{}/Все фотографии'.format('vk_photo/{} {}'.format(user_data['last_name'], user_data['first_name']))
@@ -34,13 +38,33 @@ def main():
             yd_user.upload_photo_to_disk(file_path=file_path, image_url=value)
         create_json(db=photo_db, user_info=user_data)
         progress_bar.finish()
-    else:
-        number_of_photos = input('Enter number of photos: \n')
-        photo_db = photos_data_dict(user_data=user_data, photos_data=vk_user.get_photos_from_album(user_id=vk_user_id, album_id=album, count=number_of_photos))
+    if album_id == -9000:
+        number_of_photos = input('Enter number of photos: ')
+        photo_db = photos_data_dict(user_data=user_data, photos_data=vk_user.get_photos_with_user(user_id=vk_user_id, count=number_of_photos))
         links = get_photo_urls(photo_db)
+        if len(links) < int(number_of_photos):
+            print('All photos in the album: ', len(links))
         yd_user.mkdir('vk_photo')
         yd_user.mkdir('vk_photo/{} {}'.format(user_data['last_name'], user_data['first_name']))
-        folder_path = 'vk_photo/{} {}/{}'.format(user_data['last_name'], user_data['first_name'], album)
+        folder_path = '{}/Фотографии с {}'.format('vk_photo/{} {}'.format(user_data['last_name'], user_data['first_name']), user_data['first_name'])
+        yd_user.mkdir(folder_path)
+        progress_bar = IncrementalBar('Upload: ', max = len(photo_db))
+        for key, value in links.items():
+            progress_bar.next()
+            file_path = '{}/{}'.format(folder_path, str(key))
+            yd_user.upload_photo_to_disk(file_path=file_path, image_url=value)
+        create_json(db=photo_db, user_info=user_data)
+        progress_bar.finish()
+    else:
+        number_of_photos = input('Enter number of photos: \n')
+        photo_db = photos_data_dict(user_data=user_data, photos_data=vk_user.get_photos_from_album(user_id=vk_user_id, album_id=album_id, count=number_of_photos))
+        links = get_photo_urls(photo_db)
+        if len(links) < int(number_of_photos):
+            print('All photos in the album: ', len(links))
+        yd_user.mkdir('vk_photo')
+        yd_user.mkdir('vk_photo/{} {}'.format(user_data['last_name'], user_data['first_name']))
+        album_name = [k for k, v in albums_dict.items() if v == album_id]
+        folder_path = 'vk_photo/{} {}/{}'.format(user_data['last_name'], user_data['first_name'], album_name[0])
         yd_user.mkdir(folder_path)
         progress_bar = IncrementalBar('Upload: ', max = len(photo_db))
         for key, value in links.items():
@@ -67,7 +91,7 @@ def photos_data_dict(user_data, photos_data):
         tmp_dict['user_id'] = user_data['id']
         tmp_dict['date'], tmp_dict['time'] = decoding_timestamp(item['date'])
         tmp_dict['likes'] = item['likes']['count']
-        type_list = ['w', 'z', 'y', 'r']
+        type_list = ['w', 'z', 'y', 'r', 'x']
         for entry in item['sizes']:
             if entry['type'] in type_list:
                 tmp_dict['url'] = entry['url']
@@ -98,10 +122,10 @@ def get_user_album_choice(collect):
     keys = list(collect.keys())
     for index, value in enumerate(keys):
         print(f'{index+1} --> {value}')
+    print()
     user_choice  = input('Enter your choice: ')
     while not user_choice.isdigit() or int(user_choice) not in range(len(keys)+1):
         user_choice  = input('Enter your choice: ')
-    print()
     if user_choice == '0':
         return 0
     else:
@@ -126,6 +150,16 @@ def create_json(db, user_info):
     file_name = '{}.json'.format(user_info['last_name'])
     with open(file_name, 'w') as output_file:
         json.dump(db, output_file, ensure_ascii=False, indent=2)
-    
+
+def return_vk_token():
+    with open('vk_token.txt') as input_file:
+        vk_token = input_file.readline().strip()
+    return vk_token
+
+def return_yandex_disk_token():
+    with open('yandex_disk_token.txt') as input_file:
+        yandex_disk_token = input_file.readline().strip()
+    return yandex_disk_token
+
 if __name__ == '__main__':
     main()

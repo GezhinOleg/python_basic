@@ -1,3 +1,4 @@
+from urllib import response
 import requests
 
 
@@ -45,4 +46,11 @@ class VkUser():
         self.__get_photo_from_album_uri = self.vk_api_uri + self.__get_photo_from_album_method
         self.__get_photo_from_album_params = {'owner_id': user_id, 'album_id': album_id, 'extended': 1, 'count': count, 'rev': 1}
         response = requests.get(url = self.__get_photo_from_album_uri, params={**self.__params, **self.__get_photo_from_album_params}).json()['response']['items']
+        return response
+
+    def get_photos_with_user(self, user_id, count=5):
+        self.__get_photos_with_user_method = 'photos.getUserPhotos'
+        self.__get_photos_with_user_uri = self.vk_api_uri + self.__get_photos_with_user_method
+        self.__get_photos_with_user_params = {'user_id': user_id, 'count': count, 'extended': 1}
+        response = requests.get(url = self.__get_photos_with_user_uri, params={**self.__params, **self.__get_photos_with_user_params}).json()['response']['items']
         return response
