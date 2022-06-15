@@ -9,10 +9,10 @@ from datetime import datetime as dt
 from  progress.bar import IncrementalBar
 
 def main():
-    vk_token = input('Enter VK-Token')
-    # vk_token = return_vk_token()
-    yandex_disk_token = input('Enter Yandex Disk Token: ')
-    # yandex_disk_token = return_yandex_disk_token()
+    # vk_token = input('Enter VK-Token')
+    vk_token = return_vk_token()
+    # yandex_disk_token = input('Enter Yandex Disk Token: ')
+    yandex_disk_token = return_yandex_disk_token()
     vk_ipi_version = '5.131'
     vk_user = VkUser(vk_token, vk_ipi_version)
     yd_user = YandexDisk(yandex_disk_token)
@@ -38,7 +38,7 @@ def main():
             yd_user.upload_photo_to_disk(file_path=file_path, image_url=value)
         create_json(db=photo_db, user_info=user_data)
         progress_bar.finish()
-    if album_id == -9000:
+    elif album_id == -9000:
         number_of_photos = input('Enter number of photos: ')
         photo_db = photos_data_dict(user_data=user_data, photos_data=vk_user.get_photos_with_user(user_id=vk_user_id, count=number_of_photos))
         links = get_photo_urls(photo_db)
